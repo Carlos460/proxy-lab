@@ -1,0 +1,2 @@
+GET http://localhost:8080/home.html HTTP/1.0
+POST http://localhost:8080/home.html HTTP/1.0
