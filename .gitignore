@@ -1,0 +1,4 @@
+*.o
+proxy
+.gdb_history
+build
