@@ -1,4 +1,7 @@
 #include "csapp.h"
+#include <stdio.h>
+#include <sys/socket.h>
+#include <unistd.h>
 
 /* forward_request: forwards client request to target host
  */
