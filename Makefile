@@ -29,11 +29,18 @@ $(TARGET): $(OBJS)
 $(BUILD)/%.o: %.c | $(BUILD)
 	$(CC) $(CFLAGS) -Isrc -Iexternal -c $< -o $@
 
+
 $(BUILD):
 	mkdir -p $@
 
+# creates compile_commands.json file for nvim lsp
 bear:
-	bear -- make
+	mkdir -p $(BUILD)
+	rm -f $(OBJS)
+	rm -f $(TARGET)
+	bear -- $(MAKE)
+	mv compile_commands.json $(BUILD)/compile_commands.json
+
 # Creates a tarball in ../proxylab-handin.tar that you can then
 # hand in. DO NOT MODIFY THIS!
 handin:

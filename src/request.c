@@ -1,10 +1,10 @@
-#include "csapp.h"
 #include "globals.h"
 #include "transaction.h"
 #include <stdio.h>
 #include <sys/socket.h>
 #include <unistd.h>
 
+void verify_requesthdrs(rio_t *rp, char buf[MAXLINE], size_t maxlen);
 /* forward_request: forwards client request to target host
  */
 void handle_request(Transaction *t) {
@@ -12,7 +12,7 @@ void handle_request(Transaction *t) {
         version[MAXLINE / 3 - 1];
     rio_t rio;
 
-    if (is_verbose) {
+    if (g_is_verbose) {
         printf("handling request...\n");
         printf("request buffer:\n%s\n\n", buf);
     }
@@ -29,7 +29,7 @@ void handle_request(Transaction *t) {
     if (strcmp(version, "HTTP/1.1") == 0) {
         strcpy(version, "HTTP/1.0");
         snprintf(buf, sizeof(buf), "%s %s %s", method, uri, version);
-        if (is_verbose) {
+        if (g_is_verbose) {
             printf("version updated to: %s\n", version);
             printf("updated buffer:\n%s\n\n", buf);
         }
@@ -38,7 +38,7 @@ void handle_request(Transaction *t) {
     verify_requesthdrs(&rio, buf, MAXLINE);
     printf("rio.rio_buf: \n%s\nn", rio.rio_buf);
 
-    if (is_verbose)
+    if (g_is_verbose)
         printf("forwarding request...\nbuffer:%s\n", buf);
 
     printf("response:\n%s\n", buf);
@@ -64,15 +64,15 @@ void forward_request(Transaction *t) {
 }
 
 /* helper functions */
-
 void verify_requesthdrs(rio_t *rp, char buf[MAXLINE], size_t maxlen) {
-    char header_name[] = {"Connection", "Proxy-Connection"};
-    char header_value[] = {"close", "close"};
+    char *header_name[] = {"Connection", "Proxy-Connection"};
+    char *header_value[] = {"close", "close"};
 
     Rio_readlineb(rp, buf, MAXLINE);
     while (strcmp(buf, "\r\n")) {
-        
         Rio_readlineb(rp, buf, MAXLINE);
+
+        // get header name
         printf("%s", buf);
     }
     return;

@@ -1,21 +1,14 @@
-#include "external/csapp.h"
+#include "csapp.h"
+#include "globals.h"
+#include "request.h"
+#include "response.h"
+#include "transaction.h"
+#include <stdbool.h>
 #include <stdio.h>
 #include <sys/socket.h>
 #include <unistd.h>
 
-/* Recommended max cache and object sizes */
-#define MAX_CACHE_SIZE 1049000
-#define MAX_OBJECT_SIZE 102400
-
-void serve_client(int fd);
-
-int listenfd, connfd;
-char hostname[MAXLINE], port[MAXLINE];
-
-socklen_t clientlen;
-struct sockaddr_storage clientaddr;
-SA *clientp = (SA *)&clientaddr;
-int is_verbose = 0;
+void service_client(int fd);
 
 int main(int argc, char **argv) {
     char *program_name = argv[0];
@@ -27,41 +20,31 @@ int main(int argc, char **argv) {
     }
 
     if (argc == 3 && strcmp(argv[2], "-v") == 0) {
-        is_verbose = 1;
+        g_is_verbose = true;
     }
 
     char *PORT = argv[1];
-    listenfd = Open_listenfd(PORT);
 
-    while (1) {
-        clientlen = sizeof(clientaddr);
-        connfd = Accept(listenfd, clientp, &clientlen);
+    g_listenfd = Open_listenfd(PORT);
 
-        Getnameinfo(clientp, clientlen, hostname, MAXLINE, port, MAXLINE, 0);
-        printf("Accepted connection from (%s, %s)\n", hostname, port);
-
-        serve_client(connfd);
-
-        Close(connfd);
-    }
+    while (true)
+        service_client(Accept(g_listenfd, g_clientp, &g_clientlen));
 
     return 0;
 }
 
-void print_rio(rio_t *rio) {
-  printf("rio->fd: %d\n", rio->rio_fd);
-  printf("rio->rio_buf: %s\n\n", rio->rio_buf);
+void service_client(int fd) {
+    Transaction t;
+    t.client_fd = fd;
+
+    Getnameinfo(g_clientp, g_clientlen, t.hostname, MAXLINE, t.port, MAXLINE,
+                0);
+    printf("Accepted connection from (%s, %s)\n", t.hostname, t.port);
+
+    handle_request(&t);
+    forward_request(&t);
+    handle_response(&t);
+    forward_response(&t);
+
+    Close(t.client_fd);
 }
-
-void serve_client(int fd) {
-    char buf[MAXLINE];
-    rio_t rio;
-
-    print_rio(&rio);
-  
-    Rio_readinitb(&rio, fd);
-    Rio_readlineb(&rio, buf, MAXLINE);
-
-    print_rio(&rio);
-}
-
