@@ -1,6 +1,9 @@
-#include "csapp.h";
+#ifndef REQUEST_H
+#define REQUEST_H
 
-void handle_request(int fd);
-void forward_request(char req_buf[MAXLINE]);
-void handle_response(char buf[MAXLINE]);
-void forward_response(int fd, char buf[MAXLINE]);
+#include "transaction.h"
+
+void handle_request(Transaction *t);
+void forward_request(Transaction *t);
+
+#endif // !REQUEST_H

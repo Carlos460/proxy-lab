@@ -1,18 +1,16 @@
 #include "csapp.h"
+#include "globals.h"
+#include "transaction.h"
 #include <stdio.h>
 #include <sys/socket.h>
 #include <unistd.h>
 
 /* forward_request: forwards client request to target host
  */
-void handle_request(int fd) {
-    int is_static;
-    struct stat sbuf;
-    char buf[MAXLINE], method[MAXLINE/3-1], uri[MAXLINE/3-1], version[MAXLINE/3-1];
-    char filename[MAXLINE], cgiargs[MAXLINE];
+void handle_request(Transaction *t) {
+    char buf[MAXLINE], method[MAXLINE / 3 - 1], uri[MAXLINE / 3 - 1],
+        version[MAXLINE / 3 - 1];
     rio_t rio;
-
-    char header_list[10][MAXLINE] = {0};
 
     if (is_verbose) {
         printf("handling request...\n");
@@ -20,9 +18,11 @@ void handle_request(int fd) {
     }
 
     /* Read request line and headers */
-    Rio_readinitb(&rio, fd);
 
-    if (!Rio_readlineb(&rio, buf, MAXLINE)) return;
+    Rio_readinitb(&rio, t->client_fd);
+
+    if (!Rio_readlineb(&rio, buf, MAXLINE))
+        return;
 
     sscanf(buf, "%s %s %s", method, uri, version);
 
@@ -38,17 +38,13 @@ void handle_request(int fd) {
     verify_requesthdrs(&rio, buf, MAXLINE);
     printf("rio.rio_buf: \n%s\nn", rio.rio_buf);
 
-    if (is_verbose) printf("forwarding request...\nbuffer:%s\n", buf);
+    if (is_verbose)
+        printf("forwarding request...\nbuffer:%s\n", buf);
 
-    forward_request(buf);
     printf("response:\n%s\n", buf);
-
-    handle_response(buf);
-
-    forward_response(fd, buf);
 }
 
-void forward_request(char buf[MAXLINE]) {
+void forward_request(Transaction *t) {
     int clientfd;
     rio_t rio;
     char *host = "localhost";
@@ -56,15 +52,28 @@ void forward_request(char buf[MAXLINE]) {
 
     printf("opening client fd...\n");
     clientfd = Open_clientfd(host, port);
-    Rio_readinitb(&rio,clientfd);
+    Rio_readinitb(&rio, clientfd);
 
     printf("preparing to read reponse...\n");
 
     printf("reading response...\n");
-    Rio_writen(clientfd, buf, strlen(buf));
+    Rio_writen(clientfd, t->buf, strlen(t->buf));
 
     printf("closing client fd\n");
     Close(clientfd);
 }
 
+/* helper functions */
 
+void verify_requesthdrs(rio_t *rp, char buf[MAXLINE], size_t maxlen) {
+    char header_name[] = {"Connection", "Proxy-Connection"};
+    char header_value[] = {"close", "close"};
+
+    Rio_readlineb(rp, buf, MAXLINE);
+    while (strcmp(buf, "\r\n")) {
+        
+        Rio_readlineb(rp, buf, MAXLINE);
+        printf("%s", buf);
+    }
+    return;
+}

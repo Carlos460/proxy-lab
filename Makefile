@@ -13,9 +13,11 @@ BUILD := build
 TARGET := $(BUILD)/proxy
 
 # notdir removes the directory names and keeps the file names only
-SRCS := $(notdir $(wildcard src/*.c external/*.c))
+SRCS := $(notdir $(wildcard src/*.c external/*.c *.c))
 # addprefix add the build/ prefix to the files and converts *.c to *.o
 OBJS := $(addprefix $(BUILD)/,$(SRCS:.c=.o))
+
+.PHONY: bear
 
 all: $(TARGET)
 
@@ -30,6 +32,8 @@ $(BUILD)/%.o: %.c | $(BUILD)
 $(BUILD):
 	mkdir -p $@
 
+bear:
+	bear -- make
 # Creates a tarball in ../proxylab-handin.tar that you can then
 # hand in. DO NOT MODIFY THIS!
 handin:

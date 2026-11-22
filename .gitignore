@@ -2,3 +2,6 @@
 proxy
 .gdb_history
 build
+.cache
+tiny/*.o
+tiny/tiny
