@@ -34,11 +34,7 @@ int main(int argc, char **argv) {
 }
 
 void service_client(int fd) {
-    Transaction t;
-    t.client_fd = fd;
-
-    Getnameinfo(g_clientp, g_clientlen, t.hostname, MAXLINE, t.port, MAXLINE,
-                0);
+    Transaction t = create_transaction(fd);
     printf("Accepted connection from (%s, %s)\n", t.hostname, t.port);
 
     handle_request(&t);

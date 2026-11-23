@@ -7,7 +7,7 @@
 void handle_response(Transaction *t) {}
 
 void forward_response(Transaction *t) {
-    char *buf = t->buf;
+    char *buf = t->res_buf;
 
     memset(buf, 0, MAXLINE);
 

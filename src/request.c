@@ -1,12 +1,13 @@
+#include "csapp.h"
 #include "globals.h"
 #include "transaction.h"
 #include <stdio.h>
 #include <sys/socket.h>
 #include <unistd.h>
 
+void buf_append(char *buf, char *value);
 void verify_requesthdrs(rio_t *rp, char buf[MAXLINE], size_t maxlen);
-/* forward_request: forwards client request to target host
- */
+
 void handle_request(Transaction *t) {
     char buf[MAXLINE], method[MAXLINE / 3 - 1], uri[MAXLINE / 3 - 1],
         version[MAXLINE / 3 - 1];
@@ -18,7 +19,6 @@ void handle_request(Transaction *t) {
     }
 
     /* Read request line and headers */
-
     Rio_readinitb(&rio, t->client_fd);
 
     if (!Rio_readlineb(&rio, buf, MAXLINE))
@@ -44,24 +44,9 @@ void handle_request(Transaction *t) {
     printf("response:\n%s\n", buf);
 }
 
-void forward_request(Transaction *t) {
-    int clientfd;
-    rio_t rio;
-    char *host = "localhost";
-    char *port = "4500";
+void buf_append(char *buf, char *value) {
 
-    printf("opening client fd...\n");
-    clientfd = Open_clientfd(host, port);
-    Rio_readinitb(&rio, clientfd);
-
-    printf("preparing to read reponse...\n");
-
-    printf("reading response...\n");
-    Rio_writen(clientfd, t->buf, strlen(t->buf));
-
-    printf("closing client fd\n");
-    Close(clientfd);
-}
+};
 
 /* helper functions */
 void verify_requesthdrs(rio_t *rp, char buf[MAXLINE], size_t maxlen) {
@@ -76,4 +61,25 @@ void verify_requesthdrs(rio_t *rp, char buf[MAXLINE], size_t maxlen) {
         printf("%s", buf);
     }
     return;
+}
+
+/* forward_request: forwards client request to target host
+ */
+void forward_request(Transaction *t) {
+    char *host = "localhost";
+    char *port = "4500";
+    int fd = Open_clientfd(host, port);
+    char temp_buf[MAXLINE];
+
+    rio_t *rio = &(t->res_rio);
+
+    Rio_readinitb(rio, fd);
+
+    // forwarding request
+    Rio_writen(fd, t->req_rio.rio_buf, strlen(t->req_rio.rio_buf));
+
+    // store response
+    Rio_readlineb(rio, temp_buf, strlen(temp_buf));
+
+    Close(fd);
 }
