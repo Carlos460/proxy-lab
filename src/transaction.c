@@ -5,6 +5,8 @@
 Transaction create_transaction(int fd) {
     Transaction t;
     t.client_fd = fd;
+    t.req_bufsize = MAXLINE;
+    t.res_bufsize = MAXLINE;
 
     memset(t.req_buf, 0, sizeof(t.req_buf));
     memset(t.res_buf, 0, sizeof(t.res_buf));

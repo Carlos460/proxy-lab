@@ -1,4 +1,4 @@
-#include "csapp.h"
+#include "globals.h"
 #include <stdio.h>
 #include <string.h>
 #include <sys/socket.h>
@@ -38,4 +38,27 @@ int parse_uri(char *uri, char *filename, char *cgiargs) {
         strcat(filename, uri);
         return 0;
     }
+}
+
+int buf_append(char *buf, int bufsize, char *value) {
+    if (g_is_verbose) {
+        printf("\nadding vlaue: %s\n", value);
+        printf("to buffer   : %s\n", buf);
+    }
+
+    if (strlen(buf) + strlen(value) > bufsize)
+        return -1;
+
+    snprintf(buf + strlen(buf), bufsize, "%s", value);
+
+    if (g_is_verbose) {
+        printf("result buff : %s\n", buf);
+    }
+    return 0;
+};
+
+void logger(char *msg) {
+    if (g_is_verbose)
+        return;
+    printf("%s", msg);
 }

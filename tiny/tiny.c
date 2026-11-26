@@ -57,7 +57,8 @@ void doit(int fd) {
     if (!Rio_readlineb(&rio, buf, MAXLINE)) // line:netp:doit:readrequest
         return;
     printf("%s", buf);
-    sscanf(buf, "%s %s %s", method, uri, version); // line:netp:doit:parserequest
+    sscanf(buf, "%s %s %s", method, uri,
+           version);                 // line:netp:doit:parserequest
     if (strcasecmp(method, "GET")) { // line:netp:doit:beginrequesterr
         clienterror(fd, method, "501", "Not Implemented",
                     "Tiny does not implement this method");
@@ -201,12 +202,12 @@ void serve_dynamic(int fd, char *filename, char *cgiargs) {
         /* Real server would set all CGI vars here */
         setenv("QUERY_STRING", cgiargs, 1); // line:netp:servedynamic:setenv
         Dup2(fd, STDOUT_FILENO);
-            /* Redirect stdout to client */ // line:netp:servedynamic:dup2
+        /* Redirect stdout to client */ // line:netp:servedynamic:dup2
         Execve(filename, emptylist, environ);
-            /* Run CGI program */ // line:netp:servedynamic:execve
+        /* Run CGI program */ // line:netp:servedynamic:execve
     }
     Wait(NULL);
-        /* Parent waits for and reaps child */ // line:netp:servedynamic:wait
+    /* Parent waits for and reaps child */ // line:netp:servedynamic:wait
 }
 /* $end serve_dynamic */
 

@@ -1,13 +1,16 @@
 #include "csapp.h"
 #include "globals.h"
 #include "transaction.h"
+#include "util.h"
 #include <stdio.h>
+#include <string.h>
 #include <sys/socket.h>
 #include <unistd.h>
 
-void buf_append(char *buf, char *value);
-void verify_requesthdrs(rio_t *rp, char buf[MAXLINE], size_t maxlen);
+void verify_requesthdrs(rio_t *rp, char *buf, size_t maxlen, Transaction *t);
 
+/* handle_request: handles incoming request
+ * */
 void handle_request(Transaction *t) {
     char buf[MAXLINE], method[MAXLINE / 3 - 1], uri[MAXLINE / 3 - 1],
         version[MAXLINE / 3 - 1];
@@ -28,38 +31,38 @@ void handle_request(Transaction *t) {
 
     if (strcmp(version, "HTTP/1.1") == 0) {
         strcpy(version, "HTTP/1.0");
-        snprintf(buf, sizeof(buf), "%s %s %s", method, uri, version);
+        snprintf(buf, sizeof(buf), "%s %s %s\r\n", method, uri, version);
         if (g_is_verbose) {
             printf("version updated to: %s\n", version);
-            printf("updated buffer:\n%s\n\n", buf);
+            printf("updated buffer: %s\n", buf);
         }
+        buf_append(t->req_buf, t->req_bufsize, buf);
     }
 
-    verify_requesthdrs(&rio, buf, MAXLINE);
-    printf("rio.rio_buf: \n%s\nn", rio.rio_buf);
-
-    if (g_is_verbose)
-        printf("forwarding request...\nbuffer:%s\n", buf);
-
-    printf("response:\n%s\n", buf);
+    verify_requesthdrs(&rio, buf, MAXLINE, t);
 }
 
-void buf_append(char *buf, char *value) {
-
-};
-
 /* helper functions */
-void verify_requesthdrs(rio_t *rp, char buf[MAXLINE], size_t maxlen) {
+void verify_requesthdrs(rio_t *rp, char *buf, size_t maxlen, Transaction *t) {
     char *header_name[] = {"Connection", "Proxy-Connection"};
     char *header_value[] = {"close", "close"};
 
     Rio_readlineb(rp, buf, MAXLINE);
+
+    if (strcmp(buf, "\r\n") != 0)
+        buf_append(t->req_buf, t->req_bufsize, buf);
+
     while (strcmp(buf, "\r\n")) {
         Rio_readlineb(rp, buf, MAXLINE);
+        if (strcmp(buf, "\r\n") == 0)
+            printf("nr detected");
+        buf_append(t->req_buf, t->req_bufsize, buf);
 
         // get header name
         printf("%s", buf);
     }
+
+    buf_append(t->req_buf, t->req_bufsize, buf);
     return;
 }
 
@@ -69,17 +72,16 @@ void forward_request(Transaction *t) {
     char *host = "localhost";
     char *port = "4500";
     int fd = Open_clientfd(host, port);
-    char temp_buf[MAXLINE];
+    char buf[MAXLINE];
 
     rio_t *rio = &(t->res_rio);
+    rio->rio_fd = fd;
 
     Rio_readinitb(rio, fd);
 
+    if (g_is_verbose)
+        printf("forwarding request...\nbuffer:%s\n", buf);
+
     // forwarding request
-    Rio_writen(fd, t->req_rio.rio_buf, strlen(t->req_rio.rio_buf));
-
-    // store response
-    Rio_readlineb(rio, temp_buf, strlen(temp_buf));
-
-    Close(fd);
+    Rio_writen(fd, t->req_buf, strlen(t->req_buf));
 }
